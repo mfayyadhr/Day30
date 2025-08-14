@@ -7,7 +7,7 @@ pipeline {
         GITHUB_REPO = "https://github.com/mfayyadhr/Day30.git"
         OPENSHIFT_PROJECT = "rmuhammadfayyadh-dev"
         OPENSHIFT_SERVER = "https://api.rm1.0a51.p1.openshiftapps.com:6443"
-        OPENSHIFT_TOKEN = credentials('openshift-token-fayyadh')
+        OPENSHIFT_TOKEN = credentials('open-shift-fayyadh')
         WEBHOOK_URL = "https://8ab5ba3d3dae.ngrok-free.app/github-webhook/"
     }
 
