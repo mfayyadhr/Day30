@@ -8,7 +8,7 @@ pipeline {
         OPENSHIFT_PROJECT = "rmuhammadfayyadh-dev"
         OPENSHIFT_SERVER = "https://api.rm1.0a51.p1.openshiftapps.com:6443"
         OPENSHIFT_TOKEN = credentials('open-shift-fayyadh')
-        WEBHOOK_URL = "https://8ab5ba3d3dae.ngrok-free.app/github-webhook/"
+        WEBHOOK_URL = "https://e3f70de7b8dc.ngrok-free.app/github-webhook/"
     }
 
     stages {
@@ -38,15 +38,17 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                script {
-                    echo "Pushing Docker image to Docker Hub"
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
-                        docker.image("${DOCKER_IMAGE}:${env.DOCKER_TAG}").push()
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    script {
+                        echo "Pushing Docker image to Docker Hub"
+                        sh """
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                            docker push ${DOCKER_IMAGE}:${env.DOCKER_TAG}
+                        """
                     }
                 }
             }
-}
-
+        }
 
         stage('Generate Deployment YAML') {
             steps {
@@ -88,14 +90,14 @@ pipeline {
                 def payload = """
                 {
                   "text": "Jenkins deployment failed for *fayyadh-java-openshift-jenkins* in build #${env.BUILD_NUMBER}",
-                  "attachments": [
-                    {
-                      "color": "danger",
-                      "title": "Job: ${env.JOB_NAME}",
-                      "title_link": "${env.BUILD_URL}",
-                      "text": "Check the Jenkins logs for more details."
+                    "attachments": 
+                    [
+                    {"color": "danger",
+                    "title": "Job: ${env.JOB_NAME}",
+                    "title_link": "${env.BUILD_URL}",
+                    "text": "Check the Jenkins logs for more details."
                     }
-                  ]
+                    ]
                 }
                 """
                 writeFile file: 'alert-payload.json', text: payload
