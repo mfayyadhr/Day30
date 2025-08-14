@@ -1,0 +1,165 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "panduass/kelompok2-java-openshift-jenkins"
+        DOCKER_CREDENTIALS_ID = "docker-hub-pandu"
+        GITHUB_REPO = "https://github.com/panduass/Java-Spring-Openshift.git"
+        OPENSHIFT_PROJECT = "panduass-dev"
+        OPENSHIFT_SERVER = "https://api.rm1.0a51.p1.openshiftapps.com:6443"
+        OPENSHIFT_TOKEN_3 = credentials('openshift-token-hilda')
+        OPENSHIFT_TOKEN_2 = credentials('openshift-token-najah')
+        OPENSHIFT_TOKEN = credentials('openshift-token-pandu')
+        OPENSHIFT_TOKEN_4= credentials('openshift-token-bintang')
+        OPENSHIFT_TOKEN_5= credentials('openshift-token-fayyadh')
+        WEBHOOK_URL = "https://ac0303056e79.ngrok-free.app/github-webhook/"
+    }
+
+    stages {
+        stage('Clone GitHub Repo') {
+            steps {
+                git url: "${env.GITHUB_REPO}", branch: 'main'
+            }
+        }
+
+        stage('Set Docker Tag') {
+            steps {
+                script {
+                    env.DOCKER_TAG = "v${env.BUILD_NUMBER}"
+                    echo " Docker tag: ${env.DOCKER_TAG}"
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo "Building Docker image: ${DOCKER_IMAGE}:${env.DOCKER_TAG}"
+                    docker.build("${DOCKER_IMAGE}:${env.DOCKER_TAG}", "-f java_openshift/Dockerfile java_openshift")
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    echo "Pushing Docker image to Docker Hub"
+                    docker.withRegistry('', "${DOCKER_CREDENTIALS_ID}") {
+                        docker.image("${DOCKER_IMAGE}:${env.DOCKER_TAG}").push()
+                    }
+                }
+            }
+        }
+
+        stage('Generate Deployment YAML') {
+            steps {
+                script {
+                    def baseYaml = readFile('java_openshift/base-deployment.yaml')
+                    def updatedYaml = baseYaml.replaceAll(
+                        "__IMAGE_TAG__", env.DOCKER_TAG
+                    )
+                    writeFile file: 'deployment.yaml', text: updatedYaml
+                    echo "YAML updated with image tag: ${env.DOCKER_TAG}"
+                }
+            }
+        }
+
+        stage('Apply to OpenShift') {
+            steps {
+                script {
+                    def targets = [
+                        [name: "hildamathilda7-dev", server: "https://api.rm1.0a51.p1.openshiftapps.com:6443", token: env.OPENSHIFT_TOKEN_3],
+                        [name: "sayyidatun-dev", server: "https://api.rm1.0a51.p1.openshiftapps.com:6443", token: env.OPENSHIFT_TOKEN_2],
+                        [name: "panduass-dev", server: "https://api.rm1.0a51.p1.openshiftapps.com:6443", token: env.OPENSHIFT_TOKEN],
+                        [name: "abelitang2-dev", server: "https://api.rm3.7wse.p1.openshiftapps.com:6443", token: env.OPENSHIFT_TOKEN_4],
+                        [name: "rmuhammadfayyadh-dev", server: "https://api.rm1.0a51.p1.openshiftapps.com:6443", token: env.OPENSHIFT_TOKEN_5]
+                    ]
+
+                    for (target in targets) {
+                        echo "Deploying to project: ${target.name} on cluster: ${target.server}"
+
+                        def loginStatus = sh(
+                            script: "oc login ${target.server} --token=${target.token} --insecure-skip-tls-verify",
+                            returnStatus: true
+                        )
+                        if (loginStatus != 0) {
+                            error("Failed to login to cluster: ${target.server}")
+                        }
+
+                        def projectStatus = sh(
+                            script: "oc project ${target.name}",
+                            returnStatus: true
+                        )
+                        if (projectStatus != 0) {
+                            error("Failed to switch to project: ${target.name}")
+                        }
+
+                        def applyStatus = sh(
+                            script: "oc apply -f deployment.yaml",
+                            returnStatus: true
+                        )
+                        if (applyStatus != 0) {
+                            error("Failed to apply deployment to project: ${target.name}")
+                        }
+
+                        echo "Successfully deployed to ${target.name}"
+                    }
+                }
+            }
+        }
+
+        stage('Apply HAProxy Config') {
+            steps {
+                script {
+                    // Pilih salah satu klaster untuk menjalankan HAProxy
+                    def haproxyTarget = [name: "panduass-dev", server: "https://api.rm1.0a51.p1.openshiftapps.com:6443", token: env.OPENSHIFT_TOKEN]
+
+                    echo "Applying HAProxy config to project: ${haproxyTarget.name}"
+
+                    // Login ke klaster yang akan menampung HAProxy
+                    sh "oc login ${haproxyTarget.server} --token=${haproxyTarget.token} --insecure-skip-tls-verify"
+                    sh "oc project ${haproxyTarget.name}"
+
+                    // Terapkan semua file HAProxy
+                    dir('java_openshift') {
+                        sh "oc apply -f haproxy-service.yml"
+                        sh "oc apply -f haproxy-config.yml"
+                        sh "oc apply -f haproxy-deployment.yml"
+                    }
+                    
+                    echo "HAProxy config applied successfully."
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                def route = sh(script: "oc get route kelompok2-java-openshift-jenkins -o jsonpath='{.spec.host}'", returnStdout: true).trim()
+                def routeUrl = "http://${route}"
+                echo "Deployment successful! Access your app at: ${routeUrl}"
+            }
+        }
+
+        failure {
+            script {
+                def payload = """
+                {
+                  "text": "Jenkins deployment failed for *kelompok2-java-openshift-jenkins* in build #${env.BUILD_NUMBER}",
+                  "attachments": [
+                    {
+                      "color": "danger",
+                      "title": "Job: ${env.JOB_NAME}",
+                      "title_link": "${env.BUILD_URL}",
+                      "text": "Check the Jenkins logs for more details."
+                    }
+                  ]
+                }
+                """
+                writeFile file: 'alert-payload.json', text: payload
+                sh "curl -X POST -H 'Content-type: application/json' --data @alert-payload.json ${env.WEBHOOK_URL}"
+            }
+        }
+    }
+}

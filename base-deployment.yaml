@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kelompok2-java-openshift-jenkins
+  labels:
+    app: kelompok2-java-openshift-jenkins
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kelompok2-java-openshift-jenkins
+  template:
+    metadata:
+      labels:
+        app: kelompok2-java-openshift-jenkins
+    spec:
+      containers:
+        - name: kelompok2-java-openshift-jenkins-container
+          image: panduass/kelompok2-java-openshift-jenkins:__IMAGE_TAG__
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kelompok2-java-openshift-jenkins
+spec:
+  selector:
+    app: kelompok2-java-openshift-jenkins
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: kelompok2-java-openshift-jenkins
+spec:
+  to:
+    kind: Service
+    name: kelompok2-java-openshift-jenkins
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge

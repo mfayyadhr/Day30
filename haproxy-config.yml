@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haproxy-config
+data:
+  haproxy.cfg: |
+    global
+        log stdout format raw local0
+
+    defaults
+        mode http
+        timeout connect 5s
+        timeout client  50s
+        timeout server  50s
+
+    frontend http_front
+        bind *:8080
+        default_backend web_backends
+
+    backend web_backends
+        balance roundrobin
+        option httpchk GET /actuator/health
+        server bintang kelompok2-java-openshift-jenkins-abelitang2-dev.apps.rm3.7wse.p1.openshiftapps.com:80 check
+        server pandu kelompok2-java-openshift-jenkins-panduass-dev.apps.rm1.0a51.p1.openshiftapps.com:80 check
+        server fayad kelompok2-java-openshift-jenkins-rmuhammadfayyadh-dev.apps.rm1.0a51.p1.openshiftapps.com:80 check
+        server najah kelompok2-java-openshift-jenkins-sayyidatun-dev.apps.rm1.0a51.p1.openshiftapps.com:80 check
+        server hilda kelompok2-java-openshift-jenkins-hildamathilda7-dev.apps.rm1.0a51.p1.openshiftapps.com:80 check
+        log global

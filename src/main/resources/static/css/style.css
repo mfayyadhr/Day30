@@ -1,0 +1,50 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+}
+
+.welcome-heading {
+    color: #4a90e2;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.intro-text {
+    color: #666;
+    font-size: 1.2em;
+    margin-bottom: 30px;
+}
+
+.card {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.card h2 {
+    color: #333;
+    margin-top: 0;
+}
+
+.footer {
+    margin-top: 30px;
+    font-size: 0.9em;
+    color: #999;
+}

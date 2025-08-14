@@ -1,0 +1,8 @@
+services:
+  spring-boot:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8087:8080"
+      - "5000:5000"
