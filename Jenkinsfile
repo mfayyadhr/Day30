@@ -31,7 +31,7 @@ pipeline {
             steps {
                 script {
                     echo "Building Docker image: ${DOCKER_IMAGE}:${env.DOCKER_TAG}"
-                    docker.build("${DOCKER_IMAGE}:${env.DOCKER_TAG}", "-f java_openshift/Dockerfile java_openshift")
+                    docker.build("${DOCKER_IMAGE}:${env.DOCKER_TAG}", "-f Dockerfile java_openshift")
                 }
             }
         }
@@ -50,7 +50,7 @@ pipeline {
         stage('Generate Deployment YAML') {
             steps {
                 script {
-                    def baseYaml = readFile('java_openshift/base-deployment.yaml')
+                    def baseYaml = readFile('base-deployment.yaml')
                     def updatedYaml = baseYaml.replaceAll(
                         "__IMAGE_TAG__", env.DOCKER_TAG
                     )
@@ -76,7 +76,7 @@ pipeline {
     post {
         success {
             script {
-                def route = sh(script: "oc get route pandu-java-openshift-jenkins -o jsonpath='{.spec.host}'", returnStdout: true).trim()
+                def route = sh(script: "oc get route fayyadh-java-openshift-jenkins -o jsonpath='{.spec.host}'", returnStdout: true).trim()
                 def routeUrl = "http://${route}"
                 echo "Deployment successful! Access your app at: ${routeUrl}"
             }
@@ -86,7 +86,7 @@ pipeline {
             script {
                 def payload = """
                 {
-                  "text": "Jenkins deployment failed for *pandu-java-openshift-jenkins* in build #${env.BUILD_NUMBER}",
+                  "text": "Jenkins deployment failed for *fayyadh-java-openshift-jenkins* in build #${env.BUILD_NUMBER}",
                   "attachments": [
                     {
                       "color": "danger",
