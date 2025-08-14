@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "panduass/pandu-java-openshift-jenkins"
-        DOCKER_CREDENTIALS_ID = "docker-hub-pandu"
-        GITHUB_REPO = "https://github.com/panduass/Java-Spring-Openshift.git"
-        OPENSHIFT_PROJECT = "panduass-dev"
+        DOCKER_IMAGE = "mfayyadhr/java-openshift-jenkins"
+        DOCKER_CREDENTIALS_ID = "docker-hub"
+        GITHUB_REPO = "https://github.com/mfayyadhr/Day30.git"
+        OPENSHIFT_PROJECT = "rmuhammadfayyadh-dev"
         OPENSHIFT_SERVER = "https://api.rm1.0a51.p1.openshiftapps.com:6443"
-        OPENSHIFT_TOKEN = credentials('openshift-token-pandu')
-        WEBHOOK_URL = "https://31ffd48ce41e.ngrok-free.app/github-webhook/"
+        OPENSHIFT_TOKEN = credentials('openshift-token-fayyadh')
+        WEBHOOK_URL = "https://8ab5ba3d3dae.ngrok-free.app/github-webhook/"
     }
 
     stages {
