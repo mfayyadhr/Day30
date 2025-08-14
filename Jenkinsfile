@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "mfayyadhr/java-openshift-jenkins"
-        DOCKER_CREDENTIALS_ID = "docker-hub-fayyadhr"
+        DOCKER_CREDENTIALS_ID = "docker-hub"
         GITHUB_REPO = "https://github.com/mfayyadhr/Day30.git"
         OPENSHIFT_PROJECT = "rmuhammadfayyadh-dev"
         OPENSHIFT_SERVER = "https://api.rm1.0a51.p1.openshiftapps.com:6443"
