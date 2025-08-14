@@ -40,12 +40,13 @@ pipeline {
             steps {
                 script {
                     echo "Pushing Docker image to Docker Hub"
-                    docker.withRegistry('', "${DOCKER_CREDENTIALS_ID}") {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
                         docker.image("${DOCKER_IMAGE}:${env.DOCKER_TAG}").push()
                     }
                 }
             }
-        }
+}
+
 
         stage('Generate Deployment YAML') {
             steps {
